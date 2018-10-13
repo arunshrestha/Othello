@@ -24,12 +24,11 @@ public class ACOthelloPlayer extends OthelloPlayer implements MiniMax{
         AbstractSet<GameState> successors = currentState.getSuccessors(true);
 
         GameState optimalState = null;
-        GameState.Player currentPlayer = currentState.getCurrentPlayer();
 
         int evaluation = Integer.MAX_VALUE;
 
         for (GameState state : successors) {
-            int curEval = minValue(state, Integer.MIN_VALUE, Integer.MAX_VALUE, 1);
+            int curEval = minValue(state, Integer.MIN_VALUE, Integer.MAX_VALUE, 1,  deadline);
 
             if (curEval < evaluation) {
                 evaluation = curEval;
@@ -43,18 +42,19 @@ public class ACOthelloPlayer extends OthelloPlayer implements MiniMax{
 
     }
 
-    private boolean isTerminalState(GameState state, int depth) {
+    private boolean isTerminalState(GameState state, int depth,  Date deadline) {
 
         if (depthLimit != -1 && depth >= depthLimit) return true;
 
         if(state.getStatus() != GameState.GameStatus.PLAYING) return true;
+        if (deadline != null && deadline.getTime() - System.currentTimeMillis() <= 0) return true;
 
         return false;
 
     }
 
-    public int maxValue(GameState state, int a, int b, int depth) {
-        if (isTerminalState(state, depth)) {
+    public int maxValue(GameState state, int a, int b, int depth, Date deadline) {
+        if (isTerminalState(state, depth, deadline)) {
             return staticEvaluator(state);
         }
 
@@ -67,9 +67,8 @@ public class ACOthelloPlayer extends OthelloPlayer implements MiniMax{
         for (GameState s : successors) {
             if ( s == null) continue;
 
+            v = Math.max(v, (minValue(s,a, b, depth, deadline)));
             exploredSuccessors++;
-            v = Math.max(v, (minValue(s,a, b, depth)));
-
             if (v >= b) return v;
 
             a = Math.max(v, a);
@@ -79,8 +78,8 @@ public class ACOthelloPlayer extends OthelloPlayer implements MiniMax{
 
     }
 
-    public int minValue(GameState state, int a, int b, int depth) {
-        if (isTerminalState(state, depth)) {
+    public int minValue(GameState state, int a, int b, int depth,  Date deadline) {
+        if (isTerminalState(state, depth, deadline)) {
             return staticEvaluator(state);
         }
 
@@ -91,8 +90,8 @@ public class ACOthelloPlayer extends OthelloPlayer implements MiniMax{
         depth++;
         for (GameState s : successors) {
             if (s == null) continue;
+            v = Math.min(v, (maxValue(s, a, b, depth, deadline)));
             exploredSuccessors++;
-            v = Math.min(v, (maxValue(s, a, b, depth)));
             if (v <= a) return v;
             b = Math.min(v, b);
         }
@@ -103,7 +102,8 @@ public class ACOthelloPlayer extends OthelloPlayer implements MiniMax{
     @Override
     public int staticEvaluator(GameState state) {
         staticEvaluations++;
-        return state.getScore(state.getCurrentPlayer());
+        return state.getValidMoves().size();
+
     }
 
     @Override
