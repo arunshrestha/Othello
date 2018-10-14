@@ -98,7 +98,7 @@ public class MMOthelloPlayer extends OthelloPlayer implements MiniMax{
     @Override
     public int staticEvaluator(GameState state) {
         staticEvaluations++;
-        return state.getValidMoves().size();
+        return state.getScore(state.getCurrentPlayer());
     }
 
     @Override
