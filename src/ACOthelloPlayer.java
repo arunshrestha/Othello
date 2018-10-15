@@ -3,6 +3,14 @@ import java.util.AbstractSet;
 import java.util.HashMap;
 import java.util.Date;
 
+/** 
+ * @author Catalina Ionescu, Aditi Joshi
+ *
+ * A class for our own OthelloPlayer
+ * This player uses minimax algorithm with minimax algorithm with alpha beta pruning 
+ * and some additional modifications to choose the best move for the MaxPlayer.
+ */
+
 public class ACOthelloPlayer extends OthelloPlayer implements MiniMax{
 
     private int depthLimit = -1;
@@ -10,18 +18,37 @@ public class ACOthelloPlayer extends OthelloPlayer implements MiniMax{
     private static int totalSuccessors = 0;
     private static int exploredSuccessors = 0;
     private static int totalParents = 0;
+    
+    // To keep track of the visited nodes.
     private HashMap<GameState, Integer> visited = new HashMap<GameState, Integer>();
 
+    /**
+     * Constructor 1
+     * 
+     * @param name the name of the player
+     */
     public ACOthelloPlayer (String name) {
         super(name);
     }
 
+    /**
+     * Constructor 2
+     * 
+     * @param name the name of the player
+     * @param depthLimit maximum depth that can be explored
+     */
     public ACOthelloPlayer (String name, int depthLimit) {
         super(name);
         this.depthLimit = depthLimit;
     }
 
-    //the get move should implement minimaxAlgorithm
+    /**
+     * This method uses iterative deepening to find the best move for MaxPlayer
+     * 
+     * @param currentState current state of the game
+     * @param deadline maximum amount of time the operation can take
+     * @return return the best move for MaxPlayer
+     */
     @Override
     public Square getMove(GameState currentState, Date deadline) {
         AbstractSet<GameState> successors = currentState.getSuccessors(true);
@@ -53,6 +80,13 @@ public class ACOthelloPlayer extends OthelloPlayer implements MiniMax{
 
     }
 
+    /**
+     * Check if the state is terminal, or if the depth limit has been exceeded
+     * 
+     * @param state the state to be evaluated
+     * @param depth current depth of the state
+     * @return true if it terminal state, else return false;
+     */
     private boolean isTerminalState(GameState state, int depth, long startTime,  Date deadline) {
 
         if (depthLimit != -1 && depth >= depthLimit) return true;
@@ -64,6 +98,15 @@ public class ACOthelloPlayer extends OthelloPlayer implements MiniMax{
 
     }
 
+    /**
+     * 
+     * 
+     * @param currentState the current state of the game
+     * @param depth current depth of the state
+     * @param startTime 
+     * @param deadline maximum amount of time the operation can take
+     * @return 
+     */
     public GameState iterativeDeepening(GameState currentState, int depth, long startTime, Date deadline) {
         AbstractSet<GameState> successors = currentState.getSuccessors(true);
 
@@ -87,6 +130,16 @@ public class ACOthelloPlayer extends OthelloPlayer implements MiniMax{
         return optimalState;
     }
 
+    /**
+     * 
+     * @param state the state to be evaluated
+     * @param depth current depth of the state
+     * @param alpha value of the best alternative for max
+     * @param beta value of the best alternative for min
+     * @param startTime the starting time of the algorithm
+     * @param deadline maximum amount of time the operation can take
+     * @return
+     */
     public int NegaScout (GameState state, int depth, int alpha, int beta, long startTime, Date deadline) {
 
         if ( depth == 0 || isTerminalState(state, depth, startTime, deadline)) {
@@ -119,6 +172,17 @@ public class ACOthelloPlayer extends OthelloPlayer implements MiniMax{
         return score;
     }
 
+    /**
+     * It maximizes the value of the evaluation function.
+     * 
+     * @param state the state to be evaluated
+     * @param a value of the best alternative for max
+     * @param b value of the best alternative for min
+     * @param depth current depth of the state
+     * @param startTime the starting time of the algorithm
+     * @param deadline maximum amount of time the operation can take
+     * @return the maximum value of the evaluation function
+     */
     public int maxValue(GameState state, int a, int b, int depth, long startTime, Date deadline ) {
         if (isTerminalState(state, depth, startTime, deadline)) {
             return staticEvaluator(state);
@@ -144,6 +208,17 @@ public class ACOthelloPlayer extends OthelloPlayer implements MiniMax{
 
     }
 
+    /**
+     * It minimizes the value of the evaluation function.
+     * 
+     * @param state the state to be evaluated
+     * @param a value of the best alternative for max
+     * @param b value of the best alternative for min
+     * @param depth current depth of the state
+     * @param startTime the starting time of the algorithm
+     * @param deadline maximum amount of time the operation can take
+     * @return the minimum value of the evaluation function
+     */
     public int minValue(GameState state, int a, int b, int depth, long startTime, Date deadline) {
         if (isTerminalState(state, depth, startTime, deadline)) {
             return staticEvaluator(state);
@@ -167,36 +242,65 @@ public class ACOthelloPlayer extends OthelloPlayer implements MiniMax{
 
     }
 
+    /**
+     * Compute the value of the simple static evaluation function
+     * 
+     * @state the state to be evaluated
+     * @return the value of the simple static evaluation function
+     */
     @Override
     public int staticEvaluator(GameState state) {
         if (state == null) return 0;
+        
+        // keeping track of the visited nodes
         if (visited.containsKey(state)) {
-            return visited.get(state); //Memo
+            return visited.get(state); 
         }
         int staticEvaluation = state.getValidMoves().size();
-//        int staticEvaluation = state.getScore(state.getCurrentPlayer());
         staticEvaluations++;
         visited.put(state, staticEvaluation);
-
-//        return staticEvaluation;
+        
         return staticEvaluation;
 
     }
 
+    /**
+     * Get the number of nodes generated
+     * 
+     * @return the number of nodes generated.
+     */
     @Override
     public int getNodesGenerated() {
         return exploredSuccessors;
     }
 
+    /**
+     * Get the number of static evaluations
+     * 
+     * @return the number of static evaluations performed.
+     */
     @Override
     public int getStaticEvaluations() {
         return staticEvaluations;
     }
 
+    /**
+     * Get the average branching factor of the nodes that
+     * were expanded during the search.
+     * 
+     * @return the average branching factor.
+     */
     @Override
     public double getAveBranchingFactor() {
         return (double)totalSuccessors/(double)totalParents;
     }
+    
+    /**
+     * Get the effective branching factor of the nodes that
+     * were expanded during the search.
+     * 
+     * @return the effective branching factor.
+     */
     @Override
     public double getEffectiveBranchingFactor() {
         return (double)exploredSuccessors/(double)totalParents;
